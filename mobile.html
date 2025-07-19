@@ -26,6 +26,7 @@
             margin-top: 10px;
             font-size: 18px;
             text-align: center;
+            max-width: 90%;
         }
     </style>
 </head>
@@ -39,6 +40,12 @@
             const peerId = urlParams.get('peerId');
             if (!peerId) {
                 document.getElementById('status').textContent = 'Ошибка: ID подключения не найден в URL';
+                return;
+            }
+
+            // Проверка поддержки getDisplayMedia
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+                document.getElementById('status').textContent = 'Ошибка: Ваш браузер не поддерживает трансляцию экрана. Используйте Chrome (Android) или Safari (iOS 14.5+).';
                 return;
             }
 
