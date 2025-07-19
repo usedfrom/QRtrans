@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мобильная трансляция</title>
+    <title>Screen Share - Mobile</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
     <style>
         body {
@@ -16,7 +16,7 @@
             margin: 0;
             background-color: #f0f0f0;
         }
-        video {
+        #video {
             width: 100%;
             max-width: 480px;
             border: 2px solid #333;
@@ -33,7 +33,7 @@
     <div id="status">Инициализация...</div>
 
     <script>
-        async function startStreaming() {
+        async function startScreenSharing() {
             const urlParams = new URLSearchParams(window.location.search);
             const peerId = urlParams.get('peerId');
             if (!peerId) {
@@ -42,11 +42,11 @@
             }
 
             const peer = new Peer();
-            document.getElementById('status').textContent = 'Получение доступа к камере...';
+            document.getElementById('status').textContent = 'Получение доступа к экрану...';
 
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' },
+                const stream = await navigator.mediaDevices.getDisplayMedia({
+                    video: true,
                     audio: false
                 });
 
@@ -55,12 +55,17 @@
 
                 peer.on('open', () => {
                     const call = peer.call(peerId, stream);
-                    document.getElementById('status').textContent = 'Подключение к экрану...';
+                    document.getElementById('status').textContent = 'Трансляция экрана...';
 
                     call.on('error', (err) => {
                         console.error('Call error:', err);
                         document.getElementById('status').textContent = 'Ошибка трансляции';
                     });
+
+                    stream.getVideoTracks()[0].onended = () => {
+                        document.getElementById('status').textContent = 'Трансляция завершена';
+                        peer.destroy();
+                    };
                 });
 
                 peer.on('error', (err) => {
@@ -69,11 +74,11 @@
                 });
             } catch (err) {
                 console.error('Media error:', err);
-                document.getElementById('status').textContent = 'Ошибка доступа к камере';
+                document.getElementById('status').textContent = 'Ошибка доступа к экрану';
             }
         }
 
-        startStreaming();
+        startScreenSharing();
     </script>
 </body>
 </html>
