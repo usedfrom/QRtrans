@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Video Stream</title>
+    <title>Screen Share - PC</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
@@ -21,8 +21,9 @@
             margin-bottom: 20px;
         }
         #video {
-            width: 640px;
-            height: 480px;
+            width: 80%;
+            max-width: 960px;
+            height: auto;
             border: 2px solid #333;
             background-color: black;
         }
@@ -38,12 +39,10 @@
     <div id="status">Ожидание подключения...</div>
 
     <script>
-        // Инициализация PeerJS
         const peer = new Peer();
         let currentCall = null;
 
         peer.on('open', (id) => {
-            // Генерация URL для QR-кода
             const url = `${window.location.origin}/mobile.html?peerId=${id}`;
             new QRCode(document.getElementById('qrCode'), {
                 text: url,
@@ -59,7 +58,7 @@
             call.on('stream', (remoteStream) => {
                 const video = document.getElementById('video');
                 video.srcObject = remoteStream;
-                document.getElementById('status').textContent = 'Видео транслируется';
+                document.getElementById('status').textContent = 'Экран телефона транслируется';
                 document.getElementById('qrCode').style.display = 'none';
             });
 
