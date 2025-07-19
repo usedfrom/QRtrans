@@ -20,22 +20,43 @@
         #qrCode {
             margin-bottom: 20px;
         }
-        #video {
+        #videoContainer {
+            position: relative;
             width: 80%;
             max-width: 960px;
+            height: auto;
+        }
+        #video {
+            width: 100%;
             height: auto;
             border: 2px solid #333;
             background-color: black;
         }
+        #fullscreenButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+        }
         #status {
             margin-top: 10px;
             font-size: 18px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div id="qrCode"></div>
-    <video id="video" autoplay></video>
+    <div id="videoContainer">
+        <video id="video" autoplay></video>
+        <button id="fullscreenButton" onclick="toggleFullscreen()">Полноэкранный режим</button>
+    </div>
     <div id="status">Ожидание подключения...</div>
 
     <script>
@@ -43,7 +64,7 @@
         let currentCall = null;
 
         peer.on('open', (id) => {
-            const url = `${window.location.origin}/mobile.html?peerId=${id}`;
+            const url = `${window.location.origin}/connect?peerId=${id}`;
             new QRCode(document.getElementById('qrCode'), {
                 text: url,
                 width: 256,
@@ -60,19 +81,33 @@
                 video.srcObject = remoteStream;
                 document.getElementById('status').textContent = 'Экран телефона транслируется';
                 document.getElementById('qrCode').style.display = 'none';
+                document.getElementById('fullscreenButton').style.display = 'block';
             });
 
             call.on('close', () => {
                 document.getElementById('video').srcObject = null;
                 document.getElementById('status').textContent = 'Подключение закрыто';
                 document.getElementById('qrCode').style.display = 'block';
+                document.getElementById('fullscreenButton').style.display = 'none';
             });
         });
 
         peer.on('error', (err) => {
             console.error('PeerJS error:', err);
-            document.getElementById('status').textContent = 'Ошибка подключения';
+            document.getElementById('status').textContent = `Ошибка подключения: ${err.message}`;
         });
+
+        function toggleFullscreen() {
+            const videoContainer = document.getElementById('videoContainer');
+            if (!document.fullscreenElement) {
+                videoContainer.requestFullscreen().catch(err => {
+                    console.error('Fullscreen error:', err);
+                    document.getElementById('status').textContent = 'Ошибка полноэкранного режима';
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
     </script>
 </body>
 </html>
