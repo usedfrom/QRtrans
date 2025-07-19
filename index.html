@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Video Stream</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #qrCode {
+            margin-bottom: 20px;
+        }
+        #video {
+            width: 640px;
+            height: 480px;
+            border: 2px solid #333;
+            background-color: black;
+        }
+        #status {
+            margin-top: 10px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div id="qrCode"></div>
+    <video id="video" autoplay></video>
+    <div id="status">Ожидание подключения...</div>
+
+    <script>
+        // Инициализация PeerJS
+        const peer = new Peer();
+        let currentCall = null;
+
+        peer.on('open', (id) => {
+            // Генерация URL для QR-кода
+            const url = `${window.location.origin}/mobile.html?peerId=${id}`;
+            new QRCode(document.getElementById('qrCode'), {
+                text: url,
+                width: 256,
+                height: 256
+            });
+            document.getElementById('status').textContent = 'QR-код готов. Отсканируйте с телефона.';
+        });
+
+        peer.on('call', (call) => {
+            currentCall = call;
+            call.answer();
+            call.on('stream', (remoteStream) => {
+                const video = document.getElementById('video');
+                video.srcObject = remoteStream;
+                document.getElementById('status').textContent = 'Видео транслируется';
+                document.getElementById('qrCode').style.display = 'none';
+            });
+
+            call.on('close', () => {
+                document.getElementById('video').srcObject = null;
+                document.getElementById('status').textContent = 'Подключение закрыто';
+                document.getElementById('qrCode').style.display = 'block';
+            });
+        });
+
+        peer.on('error', (err) => {
+            console.error('PeerJS error:', err);
+            document.getElementById('status').textContent = 'Ошибка подключения';
+        });
+    </script>
+</body>
+</html>

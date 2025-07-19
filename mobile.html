@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мобильная трансляция</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        video {
+            width: 100%;
+            max-width: 480px;
+            border: 2px solid #333;
+            background-color: black;
+        }
+        #status {
+            margin-top: 10px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <video id="video" autoplay muted></video>
+    <div id="status">Инициализация...</div>
+
+    <script>
+        async function startStreaming() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const peerId = urlParams.get('peerId');
+            if (!peerId) {
+                document.getElementById('status').textContent = 'Ошибка: нет ID для подключения';
+                return;
+            }
+
+            const peer = new Peer();
+            document.getElementById('status').textContent = 'Получение доступа к камере...';
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' },
+                    audio: false
+                });
+
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+
+                peer.on('open', () => {
+                    const call = peer.call(peerId, stream);
+                    document.getElementById('status').textContent = 'Подключение к экрану...';
+
+                    call.on('error', (err) => {
+                        console.error('Call error:', err);
+                        document.getElementById('status').textContent = 'Ошибка трансляции';
+                    });
+                });
+
+                peer.on('error', (err) => {
+                    console.error('PeerJS error:', err);
+                    document.getElementById('status').textContent = 'Ошибка подключения';
+                });
+            } catch (err) {
+                console.error('Media error:', err);
+                document.getElementById('status').textContent = 'Ошибка доступа к камере';
+            }
+        }
+
+        startStreaming();
+    </script>
+</body>
+</html>
