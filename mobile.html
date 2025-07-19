@@ -25,6 +25,7 @@
         #status {
             margin-top: 10px;
             font-size: 18px;
+            text-align: center;
         }
     </style>
 </head>
@@ -37,12 +38,12 @@
             const urlParams = new URLSearchParams(window.location.search);
             const peerId = urlParams.get('peerId');
             if (!peerId) {
-                document.getElementById('status').textContent = 'Ошибка: нет ID для подключения';
+                document.getElementById('status').textContent = 'Ошибка: ID подключения не найден в URL';
                 return;
             }
 
             const peer = new Peer();
-            document.getElementById('status').textContent = 'Получение доступа к экрану...';
+            document.getElementById('status').textContent = 'Запрашиваем доступ к экрану...';
 
             try {
                 const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -54,12 +55,12 @@
                 video.srcObject = stream;
 
                 peer.on('open', () => {
+                    document.getElementById('status').textContent = 'Устанавливаем соединение...';
                     const call = peer.call(peerId, stream);
-                    document.getElementById('status').textContent = 'Трансляция экрана...';
 
                     call.on('error', (err) => {
                         console.error('Call error:', err);
-                        document.getElementById('status').textContent = 'Ошибка трансляции';
+                        document.getElementById('status').textContent = `Ошибка трансляции: ${err.message}`;
                     });
 
                     stream.getVideoTracks()[0].onended = () => {
@@ -70,11 +71,19 @@
 
                 peer.on('error', (err) => {
                     console.error('PeerJS error:', err);
-                    document.getElementById('status').textContent = 'Ошибка подключения';
+                    document.getElementById('status').textContent = `Ошибка PeerJS: ${err.type} - ${err.message}`;
                 });
             } catch (err) {
                 console.error('Media error:', err);
-                document.getElementById('status').textContent = 'Ошибка доступа к экрану';
+                let errorMessage = 'Ошибка доступа к экрану: ';
+                if (err.name === 'NotAllowedError') {
+                    errorMessage += 'Разрешение на трансляцию экрана отклонено';
+                } else if (err.name === 'NotSupportedError') {
+                    errorMessage += 'Трансляция экрана не поддерживается вашим устройством или браузером';
+                } else {
+                    errorMessage += err.message;
+                }
+                document.getElementById('status').textContent = errorMessage;
             }
         }
 
